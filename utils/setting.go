@@ -2,14 +2,14 @@ package utils
 
 import (
 	"fmt"
-	"gopkg.in/ini.v1"
+	"gopkg.in/yaml.v2"
+	"os"
 )
 
 var (
-	AppMode  string
-	HttpPort string
-	JwtKey   string
-
+	AppMode    string
+	HttpPort   string
+	JwtKey     string
 	DbHost     string
 	DbPort     string
 	DbUser     string
@@ -17,26 +17,44 @@ var (
 	DbName     string
 )
 
+type Db struct {
+	DbHost     string `yaml:"DbHost"`
+	DbPort     string `yaml:"DbPort"`
+	DbUser     string `yaml:"DbUser"`
+	DbPassWord string `yaml:"DbPassWord"`
+	DbName     string `yaml:"DbName"`
+}
+
+type Env struct {
+	AppMode  string `yaml:"AppMode"`
+	HttpPort string `yaml:"HttpPort"`
+	JwtKey   string `yaml:"JwtKey"`
+	Mysql    Db     `yaml:"Mysql"`
+}
+
 func init() {
-	file, err := ini.Load("config/config.ini")
+	content, err := os.ReadFile("config/config.yaml")
+	var env Env
+	err = yaml.Unmarshal(content, &env)
+	fmt.Println(env)
 	if err != nil {
 		fmt.Println("配置文件读取错误！")
 	}
-	LoadServer(file)
-	LoadData(file)
+	LoadServer(env)
+	LoadData(env)
 
 }
 
-func LoadServer(file *ini.File) {
-	AppMode = file.Section("server").Key("AppMode").MustString("debug")
-	HttpPort = file.Section("server").Key("HttpPort").MustString(":3000")
-	JwtKey = file.Section("server").Key("JwtKey").MustString("3077267500zj")
+func LoadServer(env Env) {
+	AppMode = env.AppMode
+	HttpPort = env.HttpPort
+	JwtKey = env.JwtKey
 }
 
-func LoadData(file *ini.File) {
-	DbHost = file.Section("database").Key("DbHost").MustString("192.168.202.150")
-	DbPort = file.Section("database").Key("DbPort").MustString("3306")
-	DbUser = file.Section("database").Key("DbUser").MustString("root")
-	DbPassWord = file.Section("database").Key("DbPassWord").String()
-	DbName = file.Section("database").Key("DbName").MustString("novel")
+func LoadData(env Env) {
+	DbHost = env.Mysql.DbHost
+	DbPort = env.Mysql.DbPort
+	DbUser = env.Mysql.DbUser
+	DbPassWord = env.Mysql.DbPassWord
+	DbName = env.Mysql.DbName
 }
